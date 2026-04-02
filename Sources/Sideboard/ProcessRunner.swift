@@ -11,11 +11,11 @@ enum ProcessRunner {
                 process.executableURL = xcrun
                 process.arguments = ["simctl"] + arguments
 
-                if let input {
-                    let inputPipe = Pipe()
-                    process.standardInput = inputPipe
-                    inputPipe.fileHandleForWriting.write(Data(input.utf8))
-                    inputPipe.fileHandleForWriting.closeFile()
+                var inputPipe: Pipe?
+                if input != nil {
+                    let pipe = Pipe()
+                    process.standardInput = pipe
+                    inputPipe = pipe
                 }
 
                 let outputPipe = Pipe()
@@ -24,12 +24,19 @@ enum ProcessRunner {
 
                 do {
                     try process.run()
-                    process.waitUntilExit()
-                    let data = outputPipe.fileHandleForReading.readDataToEndOfFile()
-                    continuation.resume(returning: String(data: data, encoding: .utf8))
                 } catch {
                     continuation.resume(returning: nil)
+                    return
                 }
+
+                if let input {
+                    inputPipe?.fileHandleForWriting.write(Data(input.utf8))
+                    inputPipe?.fileHandleForWriting.closeFile()
+                }
+
+                let data = outputPipe.fileHandleForReading.readDataToEndOfFile()
+                process.waitUntilExit()
+                continuation.resume(returning: String(data: data, encoding: .utf8))
             }
         }
     }
