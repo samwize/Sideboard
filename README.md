@@ -2,40 +2,43 @@
 
 **Always at your side.**
 
-A developer clipboard companion. Currently a lightweight script that fixes the broken Xcode 26.4 Mac-to-Simulator pasteboard sync.
+A macOS menu bar app that syncs your clipboard with the iOS Simulator. Fixes the broken pasteboard sync in Xcode 26.4.
 
-## Quick Start
+## Install
 
 ```bash
-swift ~/Workspace/Sideboard/sideboard.swift
+make install
 ```
 
-That's it. The script will:
+This builds a release binary, bundles it into `Sideboard.app`, and copies it to `~/Applications/`.
 
-1. Watch your Mac clipboard for changes (every 1 second)
-2. Print each change with a timestamp (truncated to 100 chars)
-3. Auto-sync to any booted iOS Simulator
+## Run (without installing)
 
-Copy something on your Mac, and it'll appear in the Simulator's pasteboard. Cmd+V in the Simulator just works.
+```bash
+make run
+```
 
-## Stop
+## Uninstall
 
-Press `Ctrl+C`.
+```bash
+make uninstall
+```
+
+## How it works
+
+SideBoard polls `NSPasteboard.general.changeCount` every 1 second. When you copy something on your Mac, it syncs to the booted Simulator via `xcrun simctl pbcopy`. It also syncs the other direction: copies made inside the Simulator appear on your Mac clipboard.
+
+The menu bar icon shows `clipboard.fill` when a Simulator is booted and syncing, `clipboard` otherwise.
 
 ## Requirements
 
-- macOS with Xcode command line tools installed (`xcrun simctl` must be available)
-- A booted iOS Simulator (if no simulator is running, the sync silently skips)
+- macOS 26+
+- Xcode command line tools (`xcrun simctl` must be available)
 
-## What it looks like
+## Legacy script
 
-```
-SideBoard - Always at your side
-Watching clipboard for changes (polling every 1s)...
-Syncing to booted iOS Simulator when changes detected.
-Press Ctrl+C to stop.
+The original single-file script is still available:
 
-[14:32:01] {"user": "test", "token": "abc123"}
-[14:32:15] https://example.com/deep-link?id=42
-[14:33:02] func viewDidLoad() {\n    super.viewDidLoad()\n    let manager = ClipboardManager()\n    manager...
+```bash
+swift sideboard.swift
 ```
