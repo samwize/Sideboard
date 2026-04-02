@@ -1,7 +1,4 @@
 import AppKit
-import OSLog
-
-private let logger = Logger(subsystem: "com.samwize.sideboard", category: "sync")
 
 @MainActor
 @Observable
@@ -10,14 +7,16 @@ final class SimulatorSync {
 
     private let pasteboard = NSPasteboard.general
     private let history: ClipboardHistory
+    private let log: LogStore
     private var lastChangeCount: Int
     private var lastSimContent = ""
     private var pollCount = 0
 
-    init(history: ClipboardHistory) {
+    init(history: ClipboardHistory, log: LogStore) {
         self.history = history
+        self.log = log
         lastChangeCount = pasteboard.changeCount
-        logger.info("SideBoard started")
+        log.info("SideBoard started")
         Task { [weak self] in
             while !Task.isCancelled {
                 await self?.pollOnce()
@@ -32,9 +31,13 @@ final class SimulatorSync {
             let wasBooted = isSimulatorBooted
             isSimulatorBooted = output?.contains("(Booted)") ?? false
             if isSimulatorBooted && !wasBooted {
-                logger.info("Simulator booted")
+                lastSimContent = pasteboard.string(forType: .string) ?? ""
+                if !lastSimContent.isEmpty {
+                    await ProcessRunner.simctl(["pbcopy", "booted"], input: lastSimContent)
+                }
+                log.info("Simulator booted")
             } else if !isSimulatorBooted && wasBooted {
-                logger.info("Simulator lost")
+                log.info("Simulator lost")
             }
         }
         pollCount += 1
@@ -53,7 +56,7 @@ final class SimulatorSync {
                 if isSimulatorBooted {
                     lastSimContent = content
                     await ProcessRunner.simctl(["pbcopy", "booted"], input: content)
-                    logger.info("Mac → Sim: \(content.prefix(80))")
+                    log.info("Mac → Sim: \(content.prefix(80))")
                 }
             }
         }
@@ -72,7 +75,7 @@ final class SimulatorSync {
                 pasteboard.setString(simContent, forType: .string)
                 lastChangeCount = pasteboard.changeCount
                 history.add(content: simContent, sourceApp: "iOS Simulator")
-                logger.info("Sim → Mac: \(simContent.prefix(80))")
+                log.info("Sim → Mac: \(simContent.prefix(80))")
             }
         }
     }

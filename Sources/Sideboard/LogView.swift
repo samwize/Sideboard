@@ -1,15 +1,8 @@
 import SwiftUI
 import OSLog
 
-struct LogEntry: Identifiable {
-    let id = UUID()
-    let date: Date
-    let message: String
-    let level: OSLogEntryLog.Level
-}
-
 struct LogView: View {
-    @State private var logEntries: [LogEntry] = []
+    let logStore: LogStore
 
     var body: some View {
         VStack(spacing: 0) {
@@ -17,21 +10,17 @@ struct LogView: View {
                 Text("Logs")
                     .font(.headline)
                 Spacer()
-                Button { refreshLogs() } label: {
-                    Image(systemName: "arrow.clockwise")
-                }
-                .buttonStyle(.borderless)
             }
             .padding(12)
 
             Divider()
 
-            if logEntries.isEmpty {
+            if logStore.entries.isEmpty {
                 ContentUnavailableView("No logs yet", systemImage: "doc.text")
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 4) {
-                        ForEach(logEntries) { entry in
+                        ForEach(logStore.entries.reversed()) { entry in
                             LogEntryRow(entry: entry)
                         }
                     }
@@ -39,20 +28,6 @@ struct LogView: View {
                 }
             }
         }
-        .onAppear { refreshLogs() }
-    }
-
-    private func refreshLogs() {
-        do {
-            let store = try OSLogStore(scope: .currentProcessIdentifier)
-            let position = store.position(date: Date().addingTimeInterval(-86400))
-            var entries = try store.getEntries(at: position)
-                .compactMap { $0 as? OSLogEntryLog }
-                .filter { $0.subsystem == "com.samwize.sideboard" }
-                .map { LogEntry(date: $0.date, message: $0.composedMessage, level: $0.level) }
-            entries.reverse()
-            logEntries = entries
-        } catch {}
     }
 }
 

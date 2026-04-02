@@ -9,10 +9,9 @@ final class ClipboardHistory {
     private let maxEntries = 100
 
     func add(content: String, sourceApp: String?) {
-        if content == lastWrittenContent {
-            lastWrittenContent = nil
-            return
-        }
+        let isOurWrite = content == lastWrittenContent
+        lastWrittenContent = nil
+        if isOurWrite { return }
         let entry = ClipboardEntry(content: content, sourceApp: sourceApp)
         entries.insert(entry, at: 0)
         if entries.count > maxEntries {

@@ -4,10 +4,11 @@ import SwiftUI
 @Observable
 final class AppState {
     let history = ClipboardHistory()
+    let log = LogStore()
     let sync: SimulatorSync
 
     init() {
-        sync = SimulatorSync(history: history)
+        sync = SimulatorSync(history: history, log: log)
     }
 
     func recopy(_ entry: ClipboardEntry) {
@@ -26,7 +27,7 @@ struct SideboardApp: App {
         MenuBarExtra {
             VStack(spacing: 0) {
                 if showingLogs {
-                    LogView()
+                    LogView(logStore: appState.log)
                 } else {
                     HistoryView(history: appState.history) { entry in
                         appState.recopy(entry)
