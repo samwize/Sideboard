@@ -17,6 +17,7 @@ final class AppState {
         history.lastWrittenContent = entry.content
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(entry.content, forType: .string)
+        history.moveToTop(entry)
     }
 }
 
@@ -32,16 +33,19 @@ struct SideboardApp: App {
     var body: some Scene {
         MenuBarExtra {
             VStack(spacing: 0) {
-                switch selectedTab {
-                case .clipboard:
-                    ClipboardView(history: appState.history) { entry in
-                        appState.recopy(entry)
+                Group {
+                    switch selectedTab {
+                    case .clipboard:
+                        ClipboardView(history: appState.history) { entry in
+                            appState.recopy(entry)
+                        }
+                    case .logs:
+                        LogView(logStore: appState.log)
+                    case .settings:
+                        SettingsView(appState: appState)
                     }
-                case .logs:
-                    LogView(logStore: appState.log)
-                case .settings:
-                    SettingsView(appState: appState)
                 }
+                .frame(maxHeight: .infinity)
 
                 Divider()
 

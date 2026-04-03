@@ -19,6 +19,12 @@ final class ClipboardHistory {
         }
     }
 
+    func moveToTop(_ entry: ClipboardEntry) {
+        entries.removeAll { $0.id == entry.id }
+        let fresh = ClipboardEntry(content: entry.content, sourceApp: entry.sourceApp)
+        entries.insert(fresh, at: 0)
+    }
+
     func clear() {
         entries.removeAll()
     }

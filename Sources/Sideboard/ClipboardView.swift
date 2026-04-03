@@ -8,23 +8,17 @@ struct ClipboardView: View {
         if history.entries.isEmpty {
             ContentUnavailableView("No clipboard history yet", systemImage: "clipboard")
         } else {
-            ScrollView {
+            ScrollView(showsIndicators: false) {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(history.entries.enumerated()), id: \.element.id) { index, entry in
                         if shouldShowDivider(at: index) {
                             TimeDivider(date: entry.timestamp)
                         }
-                        EntryRow(entry: entry, isCurrentClipboard: entry.content == currentClipboard) {
-                            onRecopy(entry)
-                        }
+                        EntryRow(entry: entry) { onRecopy(entry) }
                     }
                 }
             }
         }
-    }
-
-    private var currentClipboard: String? {
-        NSPasteboard.general.string(forType: .string)
     }
 
     private func shouldShowDivider(at index: Int) -> Bool {
@@ -69,7 +63,6 @@ private struct TimeDivider: View {
 
 private struct EntryRow: View {
     let entry: ClipboardEntry
-    let isCurrentClipboard: Bool
     let onTap: () -> Void
     @State private var isHovered = false
 
@@ -89,9 +82,9 @@ private struct EntryRow: View {
 
             Spacer(minLength: 4)
 
-            Image(systemName: isCurrentClipboard ? "checkmark" : "square.on.square")
+            Image(systemName: "square.on.square")
                 .font(.system(size: 10))
-                .foregroundStyle(isCurrentClipboard ? Color.green : Color.secondary)
+                .foregroundStyle(.secondary)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
