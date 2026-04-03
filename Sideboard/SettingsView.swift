@@ -65,7 +65,7 @@ struct SettingsView: View {
                     .keyboardShortcut("q")
                 }
 
-                Text("Sideboard \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")")
+                Text("Sideboard \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "") (\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""))")
                     .font(.caption2)
                     .foregroundStyle(.quaternary)
                     .padding(.top, 16)
