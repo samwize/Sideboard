@@ -14,7 +14,7 @@ struct ClipboardView: View {
                         if shouldShowDivider(at: index) {
                             TimeDivider(date: entry.timestamp)
                         }
-                        EntryRow(entry: entry, isCurrentClipboard: index == 0 && isTopEntryCurrent) {
+                        EntryRow(entry: entry, isCurrentClipboard: entry.content == currentClipboard) {
                             onRecopy(entry)
                         }
                     }
@@ -23,9 +23,8 @@ struct ClipboardView: View {
         }
     }
 
-    private var isTopEntryCurrent: Bool {
-        guard let first = history.entries.first else { return false }
-        return NSPasteboard.general.string(forType: .string) == first.content
+    private var currentClipboard: String? {
+        NSPasteboard.general.string(forType: .string)
     }
 
     private func shouldShowDivider(at index: Int) -> Bool {
