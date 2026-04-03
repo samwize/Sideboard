@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct HistoryView: View {
+struct ClipboardView: View {
     let history: ClipboardHistory
     let onRecopy: (ClipboardEntry) -> Void
 
@@ -14,12 +14,18 @@ struct HistoryView: View {
                         if shouldShowDivider(at: index) {
                             TimeDivider(date: entry.timestamp)
                         }
-                        EntryRow(entry: entry)
-                            .onTapGesture { onRecopy(entry) }
+                        EntryRow(entry: entry, isCurrentClipboard: index == 0 && isTopEntryCurrent) {
+                            onRecopy(entry)
+                        }
                     }
                 }
             }
         }
+    }
+
+    private var isTopEntryCurrent: Bool {
+        guard let first = history.entries.first else { return false }
+        return NSPasteboard.general.string(forType: .string) == first.content
     }
 
     private func shouldShowDivider(at index: Int) -> Bool {
@@ -64,19 +70,29 @@ private struct TimeDivider: View {
 
 private struct EntryRow: View {
     let entry: ClipboardEntry
+    let isCurrentClipboard: Bool
+    let onTap: () -> Void
     @State private var isHovered = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(entry.preview)
-                .font(.system(.caption, design: .monospaced))
-                .lineLimit(2)
-                .foregroundStyle(.primary)
-            if let sourceApp = entry.sourceApp {
-                Text(sourceApp)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(entry.preview)
+                    .font(.system(.caption, design: .monospaced))
+                    .lineLimit(2)
+                    .foregroundStyle(.primary)
+                if let sourceApp = entry.sourceApp {
+                    Text(sourceApp)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
             }
+
+            Spacer(minLength: 4)
+
+            Image(systemName: isCurrentClipboard ? "checkmark" : "square.on.square")
+                .font(.system(size: 10))
+                .foregroundStyle(isCurrentClipboard ? Color.green : Color.secondary)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
@@ -84,5 +100,6 @@ private struct EntryRow: View {
         .background(isHovered ? Color.accentColor.opacity(0.1) : .clear)
         .contentShape(Rectangle())
         .onHover { isHovered = $0 }
+        .onTapGesture { onTap() }
     }
 }

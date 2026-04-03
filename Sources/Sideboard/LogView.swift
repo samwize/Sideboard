@@ -6,15 +6,6 @@ struct LogView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                Text("Logs")
-                    .font(.headline)
-                Spacer()
-            }
-            .padding(12)
-
-            Divider()
-
             if logStore.entries.isEmpty {
                 ContentUnavailableView("No logs yet", systemImage: "doc.text")
             } else {
