@@ -11,21 +11,19 @@ _Always at your side._
 ## Install
 
 ```bash
+brew install --cask sideboard
+```
+
+(Coming soon. For now, build from source.)
+
+## Build from source
+
+Open `Sideboard.xcodeproj` in Xcode and hit Cmd+R.
+
+Or use the Makefile:
+
+```bash
 make install
-```
-
-This builds a release binary, bundles it into `Sideboard.app`, and copies it to `~/Applications/`.
-
-## Run (without installing)
-
-```bash
-make run
-```
-
-## Uninstall
-
-```bash
-make uninstall
 ```
 
 ## How it works
@@ -38,3 +36,7 @@ The menu bar icon shows `clipboard.fill` when a Simulator is booted and syncing,
 
 - macOS 26+
 - Xcode command line tools (`xcrun simctl` must be available)
+
+## License
+
+[MIT](LICENSE)
