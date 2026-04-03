@@ -21,8 +21,10 @@ final class AppState {
     }
 }
 
-enum Tab {
-    case clipboard, logs, settings
+enum Tab: String, CaseIterable {
+    case clipboard = "Clipboard"
+    case logs = "Logs"
+    case settings = "Settings"
 }
 
 @main
@@ -33,6 +35,15 @@ struct SideboardApp: App {
     var body: some Scene {
         MenuBarExtra {
             VStack(spacing: 0) {
+                Picker("", selection: $selectedTab) {
+                    ForEach(Tab.allCases, id: \.self) { tab in
+                        Text(tab.rawValue).tag(tab)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+
                 Group {
                     switch selectedTab {
                     case .clipboard:
@@ -46,46 +57,11 @@ struct SideboardApp: App {
                     }
                 }
                 .frame(maxHeight: .infinity)
-
-                Divider()
-
-                HStack(spacing: 0) {
-                    TabBarButton(icon: "clipboard", label: "Clipboard", tab: .clipboard, selected: $selectedTab)
-                    TabBarButton(icon: "doc.text", label: "Logs", tab: .logs, selected: $selectedTab)
-                    TabBarButton(icon: "gear", label: "Settings", tab: .settings, selected: $selectedTab)
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 6)
             }
             .frame(width: 320, height: 400)
         } label: {
             Image(systemName: appState.sync.isSimulatorBooted ? "clipboard.fill" : "clipboard")
         }
         .menuBarExtraStyle(.window)
-    }
-}
-
-private struct TabBarButton: View {
-    let icon: String
-    let label: String
-    let tab: Tab
-    @Binding var selected: Tab
-
-    private var isSelected: Bool { selected == tab }
-
-    var body: some View {
-        Button {
-            selected = tab
-        } label: {
-            VStack(spacing: 2) {
-                Image(systemName: icon)
-                    .font(.system(size: 14))
-                Text(label)
-                    .font(.system(size: 9))
-            }
-            .frame(maxWidth: .infinity)
-            .foregroundStyle(isSelected ? Color.accentColor : .secondary)
-        }
-        .buttonStyle(.plain)
     }
 }

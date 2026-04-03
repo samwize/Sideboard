@@ -9,7 +9,7 @@ struct LogView: View {
             if logStore.entries.isEmpty {
                 ContentUnavailableView("No logs yet", systemImage: "doc.text")
             } else {
-                ScrollView {
+                ScrollView(showsIndicators: false) {
                     LazyVStack(alignment: .leading, spacing: 4) {
                         ForEach(logStore.entries.reversed()) { entry in
                             LogEntryRow(entry: entry)
