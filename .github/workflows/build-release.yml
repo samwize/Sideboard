@@ -13,6 +13,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
 
       - name: Import signing certificate
         env:
@@ -60,22 +62,12 @@ jobs:
 
       - name: Create DMG
         run: |
-          brew install create-dmg
-          rm -f Sideboard.dmg
-          create-dmg \
-            --volname "Sideboard" \
-            --background "Resources/dmg-background.png" \
-            --window-pos 200 120 \
-            --window-size 600 450 \
-            --icon-size 128 \
-            --text-size 14 \
-            --hide-extension "Sideboard.app" \
-            --icon "Sideboard.app" 150 200 \
-            --app-drop-link 450 200 \
-            --skip-jenkins \
-            Sideboard.dmg \
-            build/Release/Sideboard.app || true
-          test -f Sideboard.dmg || exit 1
+          rm -rf build/dmg Sideboard.dmg
+          mkdir -p build/dmg
+          cp -R build/Release/Sideboard.app build/dmg/
+          ln -s /Applications build/dmg/Applications
+          hdiutil create -volname Sideboard -srcfolder build/dmg -ov -format UDZO Sideboard.dmg
+          rm -rf build/dmg
 
       - name: Create GitHub Release
         env:
