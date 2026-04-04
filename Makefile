@@ -49,12 +49,8 @@ dmg: notarize
 
 release: dmg
 	@echo "Creating release v$(VERSION)..."
-	$(eval SHA := $(shell shasum -a 256 $(DMG_NAME) | cut -d' ' -f1))
-	gh release create v$(VERSION) $(DMG_NAME) \
-		--title "Sideboard v$(VERSION)" \
-		--notes "$$(gh api repos/samwize/Sideboard/releases/generate-notes -f tag_name=v$(VERSION) -q .body)$$(printf '\n\n## Verify\n\n```bash\nshasum -a 256 ~/Downloads/Sideboard.dmg\n```\n\nExpected: \`$(SHA)\`')"
+	gh release create v$(VERSION) $(DMG_NAME) --title "Sideboard v$(VERSION)" --generate-notes
 	@echo "Released v$(VERSION)"
-	@echo "SHA-256: $(SHA)"
 
 clean:
 	rm -rf build $(DMG_NAME)
