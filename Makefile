@@ -41,9 +41,12 @@ dmg: notarize
 	rm -f $(DMG_NAME)
 	create-dmg \
 		--volname "$(APP_NAME)" \
+		--background "Resources/dmg-background.png" \
 		--window-pos 200 120 \
-		--window-size 600 400 \
+		--window-size 600 450 \
 		--icon-size 128 \
+		--text-size 14 \
+		--hide-extension "$(APP_NAME).app" \
 		--icon "$(APP_NAME).app" 150 200 \
 		--app-drop-link 450 200 \
 		$(DMG_NAME) \
