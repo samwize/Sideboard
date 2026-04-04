@@ -53,7 +53,7 @@ struct SettingsView: View {
                         NSApplication.shared.terminate(nil)
                     } label: {
                         HStack {
-                            Text("Quit SideBoard")
+                            Text("Quit Sideboard")
                             Spacer()
                             Text("⌘Q")
                                 .font(.caption)
@@ -65,7 +65,7 @@ struct SettingsView: View {
                     .keyboardShortcut("q")
                 }
 
-                Text("SideBoard 1.0.0")
+                Text("Sideboard \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "") (\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""))")
                     .font(.caption2)
                     .foregroundStyle(.quaternary)
                     .padding(.top, 16)

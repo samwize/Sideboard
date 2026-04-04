@@ -16,7 +16,7 @@ final class SimulatorSync {
         self.history = history
         self.log = log
         lastChangeCount = pasteboard.changeCount
-        log.info("SideBoard started")
+        log.info("Sideboard started")
         Task { [weak self] in
             while !Task.isCancelled {
                 await self?.pollOnce()

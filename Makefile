@@ -1,33 +1,24 @@
 APP_NAME = Sideboard
-BUILD_DIR = .build/release
-APP_BUNDLE = .build/$(APP_NAME).app
+BUILD_DIR = build/Release
 INSTALL_DIR = $(HOME)/Applications
 
-.PHONY: build bundle install uninstall run clean
+.PHONY: build install uninstall run clean
 
 build:
-	swift build -c release
+	xcodebuild -project $(APP_NAME).xcodeproj -scheme $(APP_NAME) -configuration Release build SYMROOT=build
 
-bundle: build
-	mkdir -p $(APP_BUNDLE)/Contents/MacOS
-	mkdir -p $(APP_BUNDLE)/Contents/Resources
-	cp $(BUILD_DIR)/$(APP_NAME) $(APP_BUNDLE)/Contents/MacOS/
-	cp Resources/Info.plist $(APP_BUNDLE)/Contents/
-	cp Resources/AppIcon.icns $(APP_BUNDLE)/Contents/Resources/
-
-install: bundle
+install: build
 	-@killall $(APP_NAME) 2>/dev/null || true
 	mkdir -p $(INSTALL_DIR)
-	cp -R $(APP_BUNDLE) $(INSTALL_DIR)/
+	cp -R $(BUILD_DIR)/$(APP_NAME).app $(INSTALL_DIR)/
 	@echo "Installed to $(INSTALL_DIR)/$(APP_NAME).app"
 
 uninstall:
 	rm -rf $(INSTALL_DIR)/$(APP_NAME).app
 	@echo "Uninstalled $(APP_NAME).app"
 
-run: bundle
-	open $(APP_BUNDLE)
+run: build
+	open $(BUILD_DIR)/$(APP_NAME).app
 
 clean:
-	swift package clean
-	rm -rf $(APP_BUNDLE)
+	rm -rf build

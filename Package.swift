@@ -7,7 +7,8 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "Sideboard",
-            path: "Sources/Sideboard"
+            path: "Sideboard",
+            exclude: ["Assets.xcassets"]
         )
     ]
 )

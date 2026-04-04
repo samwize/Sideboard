@@ -6,7 +6,7 @@ import OSLog
 final class LogStore {
     private(set) var entries: [LogEntry] = []
 
-    let logger = Logger(subsystem: "com.samwize.sideboard", category: "sync")
+    let logger = Logger(subsystem: "com.just2us.sideboard", category: "sync")
 
     func info(_ message: String) {
         logger.info("\(message)")
