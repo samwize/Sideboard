@@ -10,14 +10,6 @@ _Always at your side._
 
 ## Install
 
-```bash
-brew install --cask sideboard
-```
-
-(Coming soon. For now, build from source.)
-
-## Build from source
-
 Open `Sideboard.xcodeproj` in Xcode and hit Cmd+R.
 
 Or use the Makefile:
