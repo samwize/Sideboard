@@ -18,8 +18,8 @@ jobs:
 
       - name: Bump version
         run: |
-          agvtool new-marketing-version ${{ github.event.inputs.version }}
-          agvtool next-version -all
+          sed -i '' "s/MARKETING_VERSION = .*/MARKETING_VERSION = ${{ github.event.inputs.version }};/" Sideboard.xcodeproj/project.pbxproj
+          awk '/CURRENT_PROJECT_VERSION/{sub(/[0-9]+/, $3+1)}1' Sideboard.xcodeproj/project.pbxproj > tmp && mv tmp Sideboard.xcodeproj/project.pbxproj
 
       - name: Commit, tag, and push
         run: |
