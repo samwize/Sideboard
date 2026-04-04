@@ -6,20 +6,16 @@ import OSLog
 final class LogStore {
     private(set) var entries: [LogEntry] = []
 
-    private let logger = Logger(subsystem: "com.just2us.sideboard", category: "sync")
+    let logger = Logger(subsystem: "com.just2us.sideboard", category: "sync")
 
     func info(_ message: String) {
         logger.info("\(message)")
-        append(message, level: .info)
+        entries.append(LogEntry(id: entries.count, date: Date(), message: message, level: .info))
     }
 
     func error(_ message: String) {
         logger.error("\(message)")
-        append(message, level: .error)
-    }
-
-    private func append(_ message: String, level: OSLogEntryLog.Level) {
-        entries.append(LogEntry(id: entries.count, date: Date(), message: message, level: level))
+        entries.append(LogEntry(id: entries.count, date: Date(), message: message, level: .error))
     }
 }
 

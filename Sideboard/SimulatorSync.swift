@@ -46,8 +46,12 @@ final class SimulatorSync {
         if pasteboard.changeCount != lastChangeCount {
             lastChangeCount = pasteboard.changeCount
             if let content = pasteboard.string(forType: .string) {
-                let sourceApp = NSWorkspace.shared.frontmostApplication?.localizedName
-                history.add(content: content, sourceApp: sourceApp)
+                if content == history.lastWrittenContent {
+                    history.lastWrittenContent = nil
+                } else {
+                    let sourceApp = NSWorkspace.shared.frontmostApplication?.localizedName
+                    history.add(content: content, sourceApp: sourceApp)
+                }
 
                 if isSimulatorBooted {
                     lastSimContent = content
