@@ -38,14 +38,17 @@ notarize: sign
 	@echo "Notarized and stapled"
 
 dmg: notarize
-	rm -rf build/dmg $(DMG_NAME)
-	mkdir -p build/dmg
-	cp -R $(BUILD_DIR)/$(APP_NAME).app build/dmg/
-	ln -s /Applications build/dmg/Applications
-	hdiutil create -volname $(APP_NAME) -srcfolder build/dmg -ov -format UDZO $(DMG_NAME)
-	rm -rf build/dmg
-	@echo "Created $(DMG_NAME)"
-	@shasum -a 256 $(DMG_NAME)
+	rm -f $(DMG_NAME)
+	create-dmg \
+		--volname "$(APP_NAME)" \
+		--window-pos 200 120 \
+		--window-size 600 400 \
+		--icon-size 128 \
+		--icon "$(APP_NAME).app" 150 200 \
+		--app-drop-link 450 200 \
+		$(DMG_NAME) \
+		$(BUILD_DIR)/$(APP_NAME).app || true
+	@test -f $(DMG_NAME) && echo "Created $(DMG_NAME)" || (echo "Failed to create DMG" && exit 1)
 
 release: dmg
 	@echo "Creating release v$(VERSION)..."
