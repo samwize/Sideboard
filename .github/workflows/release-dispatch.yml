@@ -7,11 +7,12 @@ on:
         description: 'Version number (e.g. 1.2)'
         required: true
 
+permissions:
+  contents: write
+
 jobs:
   bump:
     runs-on: macos-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
 
