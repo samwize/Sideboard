@@ -27,25 +27,34 @@ The menu bar icon shows `clipboard.fill` when a Simulator is booted and syncing,
 
 ## Releasing
 
-Every release must be signed and notarized by Apple. The Makefile automates this.
+Push a version tag and GitHub Actions handles the rest: build, sign, notarize, DMG, and release.
+
+```bash
+git tag v1.1
+git push --tags
+```
+
+Or release manually:
 
 ```bash
 make release
 ```
 
-This runs the full pipeline: build, sign (Developer ID), notarize (Apple), staple, create DMG, and upload to GitHub Releases with auto-generated notes.
+### CI setup (one-time)
 
-Individual steps if needed:
+Add these secrets at [Settings > Secrets > Actions](https://github.com/samwize/Sideboard/settings/secrets/actions):
 
-| Command | What it does |
+| Secret | Description |
 |---|---|
-| `make build` | Compile release binary |
-| `make sign` | Code sign with Developer ID |
-| `make notarize` | Submit to Apple, wait for approval, staple ticket |
-| `make dmg` | Create DMG (includes sign + notarize) |
-| `make release` | All of the above + GitHub release |
+| `DEVELOPER_ID_CERT_P12` | Base64-encoded .p12 of the Developer ID Application certificate |
+| `DEVELOPER_ID_CERT_PASSWORD` | Password for the .p12 |
+| `APPLE_ID` | Apple ID email |
+| `APPLE_TEAM_ID` | Apple Developer team ID |
+| `APPLE_APP_SPECIFIC_PASSWORD` | From [appleid.apple.com](https://appleid.apple.com) > App-Specific Passwords |
 
-Before your first release, set up notarization credentials:
+To export the .p12: Keychain Access > find "Developer ID Application" > right-click > Export Items > save as .p12. Then `base64 -i certificate.p12 | pbcopy`.
+
+### Local setup (one-time)
 
 ```bash
 xcrun notarytool store-credentials "sideboard-notary" \
@@ -53,8 +62,6 @@ xcrun notarytool store-credentials "sideboard-notary" \
   --team-id YOUR_TEAM_ID \
   --password YOUR_APP_SPECIFIC_PASSWORD
 ```
-
-The app-specific password is generated at [appleid.apple.com](https://appleid.apple.com) > Sign-In and Security > App-Specific Passwords.
 
 ## License
 

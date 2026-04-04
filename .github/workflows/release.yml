@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  release:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Import signing certificate
+        env:
+          DEVELOPER_ID_CERT_P12: ${{ secrets.DEVELOPER_ID_CERT_P12 }}
+          DEVELOPER_ID_CERT_PASSWORD: ${{ secrets.DEVELOPER_ID_CERT_PASSWORD }}
+        run: |
+          CERT_PATH=$RUNNER_TEMP/certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/signing.keychain-db
+          KEYCHAIN_PASSWORD=$(uuidgen)
+
+          echo -n "$DEVELOPER_ID_CERT_P12" | base64 --decode -o $CERT_PATH
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          security import $CERT_PATH -P "$DEVELOPER_ID_CERT_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+      - name: Build
+        run: xcodebuild -project Sideboard.xcodeproj -scheme Sideboard -configuration Release build SYMROOT=build
+
+      - name: Sign
+        run: |
+          codesign --force --deep --options runtime \
+            --sign "Developer ID Application: Just2us Pte Ltd (DNGV8KJAPW)" \
+            build/Release/Sideboard.app
+          codesign --verify --deep --strict build/Release/Sideboard.app
+
+      - name: Notarize
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          ditto -c -k --keepParent build/Release/Sideboard.app build/Sideboard.zip
+          xcrun notarytool submit build/Sideboard.zip \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --wait
+          xcrun stapler staple build/Release/Sideboard.app
+
+      - name: Create DMG
+        run: |
+          brew install create-dmg
+          rm -f Sideboard.dmg
+          create-dmg \
+            --volname "Sideboard" \
+            --background "Resources/dmg-background.png" \
+            --window-pos 200 120 \
+            --window-size 600 450 \
+            --icon-size 128 \
+            --text-size 14 \
+            --hide-extension "Sideboard.app" \
+            --icon "Sideboard.app" 150 200 \
+            --app-drop-link 450 200 \
+            --skip-jenkins \
+            Sideboard.dmg \
+            build/Release/Sideboard.app || true
+          test -f Sideboard.dmg || exit 1
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create ${{ github.ref_name }} Sideboard.dmg \
+            --title "Sideboard ${{ github.ref_name }}" \
+            --generate-notes
+
+      - name: Cleanup keychain
+        if: always()
+        run: security delete-keychain $RUNNER_TEMP/signing.keychain-db || true
