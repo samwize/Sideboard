@@ -58,5 +58,12 @@ release: dmg
 	gh release create v$(VERSION) $(DMG_NAME) --title "Sideboard v$(VERSION)" --generate-notes
 	@echo "Released v$(VERSION)"
 
+bump:
+ifdef v
+	agvtool new-marketing-version $(v)
+endif
+	agvtool next-version -all
+	@echo "Version: $$(agvtool what-marketing-version -terse1) Build: $$(agvtool what-version -terse)"
+
 clean:
 	rm -rf build $(DMG_NAME)
