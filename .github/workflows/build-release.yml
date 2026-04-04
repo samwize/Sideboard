@@ -63,9 +63,11 @@ jobs:
       - name: Create DMG
         run: |
           rm -rf build/dmg Sideboard.dmg
-          mkdir -p build/dmg
+          mkdir -p build/dmg/.background
           cp -R build/Release/Sideboard.app build/dmg/
           ln -s /Applications build/dmg/Applications
+          cp Resources/dmg-background.png build/dmg/.background/
+          cp Resources/dmg-DS_Store build/dmg/.DS_Store
           hdiutil create -volname Sideboard -srcfolder build/dmg -ov -format UDZO Sideboard.dmg
           rm -rf build/dmg
 
