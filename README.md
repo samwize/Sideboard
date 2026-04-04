@@ -1,12 +1,8 @@
-# Sideboard
-
-![Sideboard App Icon](/Sideboard/Assets.xcassets/AppIcon.appiconset/AppIcon.png)
+![Sideboard](/Resources/hero-banner.jpg)
 
 A macOS menu bar app that syncs your clipboard with the iOS Simulator. Fixes the broken pasteboard sync in Xcode 26.4.
 
 Maybe more, in future releases.
-
-_Always at your side._
 
 ## Install
 
