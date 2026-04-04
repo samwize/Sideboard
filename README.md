@@ -10,9 +10,9 @@ _Always at your side._
 
 ## Install
 
-Open `Sideboard.xcodeproj` in Xcode and hit Cmd+R.
+Download the latest DMG from [Releases](https://github.com/samwize/Sideboard/releases), open it, and drag Sideboard to Applications.
 
-Or use the Makefile:
+Or build from source:
 
 ```bash
 make install

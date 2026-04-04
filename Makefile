@@ -1,8 +1,9 @@
 APP_NAME = Sideboard
 BUILD_DIR = build/Release
 INSTALL_DIR = $(HOME)/Applications
+DMG_NAME = $(APP_NAME).dmg
 
-.PHONY: build install uninstall run clean
+.PHONY: build install uninstall run clean dmg
 
 build:
 	xcodebuild -project $(APP_NAME).xcodeproj -scheme $(APP_NAME) -configuration Release build SYMROOT=build
@@ -20,5 +21,14 @@ uninstall:
 run: build
 	open $(BUILD_DIR)/$(APP_NAME).app
 
+dmg: build
+	rm -rf build/dmg $(DMG_NAME)
+	mkdir -p build/dmg
+	cp -R $(BUILD_DIR)/$(APP_NAME).app build/dmg/
+	ln -s /Applications build/dmg/Applications
+	hdiutil create -volname $(APP_NAME) -srcfolder build/dmg -ov -format UDZO $(DMG_NAME)
+	rm -rf build/dmg
+	@echo "Created $(DMG_NAME)"
+
 clean:
-	rm -rf build
+	rm -rf build $(DMG_NAME)
