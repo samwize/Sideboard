@@ -14,6 +14,23 @@ Or build from source:
 make install
 ```
 
+### Privacy and security
+
+A clipboard tool touches everything you copy: passwords, tokens, private messages. We take this seriously.
+
+- **Open source**. Every line of code is auditable.
+- **No network access**. Sideboard never sends your clipboard data anywhere. It only talks to the local iOS Simulator via `xcrun simctl`.
+- **Built by GitHub Actions**. Every release is built from the tagged commit on GitHub's infrastructure, not a developer's laptop. You can inspect the [build logs](https://github.com/samwize/Sideboard/actions) for any release.
+- **Signed and notarized** by Apple. macOS Gatekeeper verifies the app before it runs.
+
+To verify your download matches what CI produced:
+
+```bash
+shasum -a 256 ~/Downloads/Sideboard.dmg
+```
+
+Compare against the SHA-256 shown on the [release page](https://github.com/samwize/Sideboard/releases).
+
 ## How it works
 
 Sideboard polls `NSPasteboard.general.changeCount` every 1 second. When you copy something on your Mac, it syncs to the booted Simulator via `xcrun simctl pbcopy`. It also syncs the other direction: copies made inside the Simulator appear on your Mac clipboard.
