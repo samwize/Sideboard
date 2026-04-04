@@ -8,9 +8,9 @@ Maybe more, in future releases.
 
 Download the latest DMG from [Releases](https://github.com/samwize/Sideboard/releases), open it, and drag Sideboard to Applications.
 
-Or build from source: `make install`
-
 Every release is open source, [built by GitHub Actions](https://github.com/samwize/Sideboard/actions) from the tagged commit, signed and notarized by Apple. Verify with `shasum -a 256 ~/Downloads/Sideboard.dmg` and compare against the SHA on the [release page](https://github.com/samwize/Sideboard/releases).
+
+Or build from source: `make install`
 
 ## How it works
 
@@ -38,21 +38,19 @@ Or release manually:
 make release
 ```
 
-### CI setup (one-time)
+### CI setup
 
-Add these secrets at [Settings > Secrets > Actions](https://github.com/samwize/Sideboard/settings/secrets/actions):
+Add these GitHub repo secrets:
 
 | Secret | Description |
 |---|---|
 | `DEVELOPER_ID_CERT_P12` | Base64-encoded .p12 of the Developer ID Application certificate |
-| `DEVELOPER_ID_CERT_PASSWORD` | Password for the .p12 |
+| `DEVELOPER_ID_CERT_PASSWORD` | Password for the .p12 (if empty, use a single space) |
 | `APPLE_ID` | Apple ID email |
 | `APPLE_TEAM_ID` | Apple Developer team ID |
-| `APPLE_APP_SPECIFIC_PASSWORD` | From [appleid.apple.com](https://appleid.apple.com) > App-Specific Passwords |
+| `APPLE_APP_SPECIFIC_PASSWORD` | Apple account App-Specific Passwords |
 
-To export the .p12: Keychain Access > find "Developer ID Application" > right-click > Export Items > save as .p12. Then `base64 -i certificate.p12 | pbcopy`.
-
-### Local setup (one-time)
+### Local setup
 
 ```bash
 xcrun notarytool store-credentials "sideboard-notary" \
