@@ -8,28 +8,9 @@ Maybe more, in future releases.
 
 Download the latest DMG from [Releases](https://github.com/samwize/Sideboard/releases), open it, and drag Sideboard to Applications.
 
-Or build from source:
+Or build from source: `make install`
 
-```bash
-make install
-```
-
-### Privacy and security
-
-A clipboard tool touches everything you copy: passwords, tokens, private messages. We take this seriously.
-
-- **Open source**. Every line of code is auditable.
-- **No network access**. Sideboard never sends your clipboard data anywhere. It only talks to the local iOS Simulator via `xcrun simctl`.
-- **Built by GitHub Actions**. Every release is built from the tagged commit on GitHub's infrastructure, not a developer's laptop. You can inspect the [build logs](https://github.com/samwize/Sideboard/actions) for any release.
-- **Signed and notarized** by Apple. macOS Gatekeeper verifies the app before it runs.
-
-To verify your download matches what CI produced:
-
-```bash
-shasum -a 256 ~/Downloads/Sideboard.dmg
-```
-
-Compare against the SHA-256 shown on the [release page](https://github.com/samwize/Sideboard/releases).
+Every release is open source, [built by GitHub Actions](https://github.com/samwize/Sideboard/actions) from the tagged commit, signed and notarized by Apple. Verify with `shasum -a 256 ~/Downloads/Sideboard.dmg` and compare against the SHA on the [release page](https://github.com/samwize/Sideboard/releases).
 
 ## How it works
 
