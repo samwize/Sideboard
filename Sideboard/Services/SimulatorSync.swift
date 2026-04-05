@@ -9,7 +9,8 @@ final class SimulatorSync {
     private let history: ClipboardHistory
     private let log: LogStore
     private var lastChangeCount: Int
-    private var lastSimContent = ""
+    private var lastSentToSimulator: String?
+    private var lastObservedSimulatorContent = ""
     private var pollCount = 0
 
     init(history: ClipboardHistory, log: LogStore) {
@@ -31,12 +32,16 @@ final class SimulatorSync {
             let wasBooted = isSimulatorBooted
             isSimulatorBooted = output?.contains("(Booted)") ?? false
             if isSimulatorBooted && !wasBooted {
-                lastSimContent = pasteboard.string(forType: .string) ?? ""
-                if !lastSimContent.isEmpty {
-                    await ProcessRunner.simctl(["pbcopy", "booted"], input: lastSimContent)
+                let macContent = pasteboard.string(forType: .string) ?? ""
+                lastObservedSimulatorContent = macContent
+                if !macContent.isEmpty {
+                    lastSentToSimulator = macContent
+                    await ProcessRunner.simctl(["pbcopy", "booted"], input: macContent)
                 }
                 log.info("Simulator booted")
             } else if !isSimulatorBooted && wasBooted {
+                lastSentToSimulator = nil
+                lastObservedSimulatorContent = ""
                 log.info("Simulator lost")
             }
         }
@@ -50,7 +55,7 @@ final class SimulatorSync {
                 history.add(content: content, sourceApp: sourceApp)
 
                 if isSimulatorBooted {
-                    lastSimContent = content
+                    lastSentToSimulator = content
                     await ProcessRunner.simctl(["pbcopy", "booted"], input: content)
                     log.info("Mac → Sim: \(content.prefix(80))")
                 }
@@ -61,10 +66,17 @@ final class SimulatorSync {
 
         // Simulator -> Mac
         if let simContent = await ProcessRunner.simctl(["pbpaste", "booted"]),
-           !simContent.isEmpty,
-           simContent != lastSimContent
+           !simContent.isEmpty
         {
-            lastSimContent = simContent
+            if simContent == lastSentToSimulator {
+                lastSentToSimulator = nil
+                lastObservedSimulatorContent = simContent
+                return
+            }
+
+            guard simContent != lastObservedSimulatorContent else { return }
+
+            lastObservedSimulatorContent = simContent
             let macContent = pasteboard.string(forType: .string) ?? ""
             if simContent != macContent {
                 pasteboard.clearContents()
