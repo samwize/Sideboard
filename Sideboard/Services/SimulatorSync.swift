@@ -3,14 +3,24 @@ import AppKit
 @MainActor
 @Observable
 final class SimulatorSync {
+    private struct BootedSimulator: Decodable, Hashable {
+        let udid: String
+        let name: String
+    }
+
+    private struct BootedSimulatorList: Decodable {
+        let devices: [String: [BootedSimulator]]
+    }
+
     private(set) var isSimulatorBooted = false
 
     private let pasteboard = NSPasteboard.general
     private let history: ClipboardHistory
     private let log: LogStore
     private var lastChangeCount: Int
-    private var lastSentToSimulator: String?
-    private var lastObservedSimulatorContent = ""
+    private var bootedSimulators: [BootedSimulator] = []
+    private var lastSentToSimulator: [String: String] = [:]
+    private var lastObservedSimulatorContent: [String: String] = [:]
     private var pollCount = 0
 
     init(history: ClipboardHistory, log: LogStore) {
@@ -28,22 +38,7 @@ final class SimulatorSync {
 
     private func pollOnce() async {
         if pollCount % 5 == 0 {
-            let output = await ProcessRunner.simctl(["list", "devices", "booted"])
-            let wasBooted = isSimulatorBooted
-            isSimulatorBooted = output?.contains("(Booted)") ?? false
-            if isSimulatorBooted && !wasBooted {
-                let macContent = pasteboard.string(forType: .string) ?? ""
-                lastObservedSimulatorContent = macContent
-                if !macContent.isEmpty {
-                    lastSentToSimulator = macContent
-                    await ProcessRunner.simctl(["pbcopy", "booted"], input: macContent)
-                }
-                log.info("Simulator booted")
-            } else if !isSimulatorBooted && wasBooted {
-                lastSentToSimulator = nil
-                lastObservedSimulatorContent = ""
-                log.info("Simulator lost")
-            }
+            await refreshBootedSimulators()
         }
         pollCount += 1
 
@@ -55,9 +50,11 @@ final class SimulatorSync {
                 history.add(content: content, sourceApp: sourceApp)
 
                 if isSimulatorBooted {
-                    lastSentToSimulator = content
-                    await ProcessRunner.simctl(["pbcopy", "booted"], input: content)
-                    log.info("Mac → Sim: \(content.prefix(80))")
+                    for simulator in bootedSimulators {
+                        lastSentToSimulator[simulator.udid] = content
+                        await ProcessRunner.simctl(["pbcopy", simulator.udid], input: content)
+                    }
+                    log.info("Mac → Sim (\(bootedSimulators.count)): \(content.prefix(80))")
                 }
             }
         }
@@ -65,27 +62,94 @@ final class SimulatorSync {
         guard isSimulatorBooted else { return }
 
         // Simulator -> Mac
-        if let simContent = await ProcessRunner.simctl(["pbpaste", "booted"]),
-           !simContent.isEmpty
-        {
-            if simContent == lastSentToSimulator {
-                lastSentToSimulator = nil
-                lastObservedSimulatorContent = simContent
-                return
+        var macContent = pasteboard.string(forType: .string) ?? ""
+        var pendingMacUpdate: (BootedSimulator, String)?
+
+        for simulator in bootedSimulators {
+            guard let simContent = await ProcessRunner.simctl(["pbpaste", simulator.udid]),
+                  !simContent.isEmpty
+            else { continue }
+
+            if simContent == lastSentToSimulator[simulator.udid] {
+                lastSentToSimulator.removeValue(forKey: simulator.udid)
+                lastObservedSimulatorContent[simulator.udid] = simContent
+                continue
             }
 
-            guard simContent != lastObservedSimulatorContent else { return }
+            guard simContent != lastObservedSimulatorContent[simulator.udid] else { continue }
 
-            lastSentToSimulator = nil
-            lastObservedSimulatorContent = simContent
-            let macContent = pasteboard.string(forType: .string) ?? ""
+            lastSentToSimulator.removeValue(forKey: simulator.udid)
+            lastObservedSimulatorContent[simulator.udid] = simContent
+
             if simContent != macContent {
-                pasteboard.clearContents()
-                pasteboard.setString(simContent, forType: .string)
-                lastChangeCount = pasteboard.changeCount
-                history.add(content: simContent, sourceApp: "iOS Simulator")
-                log.info("Sim → Mac: \(simContent.prefix(80))")
+                pendingMacUpdate = (simulator, simContent)
+                macContent = simContent
             }
         }
+
+        if let (simulator, simContent) = pendingMacUpdate {
+            pasteboard.clearContents()
+            pasteboard.setString(simContent, forType: .string)
+            lastChangeCount = pasteboard.changeCount
+            history.add(content: simContent, sourceApp: "iOS Simulator")
+            log.info("Sim → Mac (\(simulator.name)): \(simContent.prefix(80))")
+        }
+    }
+
+    private func refreshBootedSimulators() async {
+        let previousSimulators = bootedSimulators
+        let previousIDs = Set(previousSimulators.map(\.udid))
+        let simulators = await fetchBootedSimulators()
+        let currentIDs = Set(simulators.map(\.udid))
+
+        bootedSimulators = simulators
+        isSimulatorBooted = !simulators.isEmpty
+
+        if currentIDs.isEmpty {
+            if !previousIDs.isEmpty {
+                log.info("Simulator lost")
+            }
+            lastSentToSimulator.removeAll()
+            lastObservedSimulatorContent.removeAll()
+            return
+        }
+
+        for lostID in previousIDs.subtracting(currentIDs) {
+            lastSentToSimulator.removeValue(forKey: lostID)
+            lastObservedSimulatorContent.removeValue(forKey: lostID)
+        }
+
+        let newlyBooted = simulators.filter { !previousIDs.contains($0.udid) }
+        guard !newlyBooted.isEmpty else { return }
+
+        let macContent = pasteboard.string(forType: .string) ?? ""
+        for simulator in newlyBooted {
+            lastObservedSimulatorContent[simulator.udid] = macContent
+            if !macContent.isEmpty {
+                lastSentToSimulator[simulator.udid] = macContent
+                await ProcessRunner.simctl(["pbcopy", simulator.udid], input: macContent)
+            }
+        }
+
+        let names = newlyBooted.map(\.name).joined(separator: ", ")
+        log.info("Simulator booted: \(names)")
+    }
+
+    private func fetchBootedSimulators() async -> [BootedSimulator] {
+        guard let output = await ProcessRunner.simctl(["list", "devices", "booted", "--json"]),
+              let data = output.data(using: .utf8),
+              let decoded = try? JSONDecoder().decode(BootedSimulatorList.self, from: data)
+        else {
+            return []
+        }
+
+        return decoded.devices.values
+            .flatMap { $0 }
+            .sorted { lhs, rhs in
+                if lhs.name == rhs.name {
+                    return lhs.udid < rhs.udid
+                }
+                return lhs.name < rhs.name
+            }
     }
 }
