@@ -50,10 +50,7 @@ final class SimulatorSync {
                 history.add(content: content, sourceApp: sourceApp)
 
                 if isSimulatorBooted {
-                    for simulator in bootedSimulators {
-                        lastSentToSimulator[simulator.udid] = content
-                        await ProcessRunner.simctl(["pbcopy", simulator.udid], input: content)
-                    }
+                    await writeToBootedSimulators(content)
                     log.info("Mac → Sim (\(bootedSimulators.count)): \(content.prefix(80))")
                 }
             }
@@ -92,7 +89,15 @@ final class SimulatorSync {
             pasteboard.setString(simContent, forType: .string)
             lastChangeCount = pasteboard.changeCount
             history.add(content: simContent, sourceApp: "iOS Simulator")
+            await writeToBootedSimulators(simContent, excluding: simulator.udid)
             log.info("Sim → Mac (\(simulator.name)): \(simContent.prefix(80))")
+        }
+    }
+
+    private func writeToBootedSimulators(_ content: String, excluding excludedUDID: String? = nil) async {
+        for simulator in bootedSimulators where simulator.udid != excludedUDID {
+            lastSentToSimulator[simulator.udid] = content
+            await ProcessRunner.simctl(["pbcopy", simulator.udid], input: content)
         }
     }
 
@@ -125,10 +130,9 @@ final class SimulatorSync {
         let macContent = pasteboard.string(forType: .string) ?? ""
         for simulator in newlyBooted {
             lastObservedSimulatorContent[simulator.udid] = macContent
-            if !macContent.isEmpty {
-                lastSentToSimulator[simulator.udid] = macContent
-                await ProcessRunner.simctl(["pbcopy", simulator.udid], input: macContent)
-            }
+        }
+        if !macContent.isEmpty {
+            await writeToBootedSimulators(macContent)
         }
 
         let names = newlyBooted.map(\.name).joined(separator: ", ")
