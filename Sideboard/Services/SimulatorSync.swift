@@ -50,7 +50,7 @@ final class SimulatorSync {
                 history.add(content: content, sourceApp: sourceApp)
 
                 if isSimulatorBooted {
-                    await writeToBootedSimulators(content)
+                    await writeToSimulators(bootedSimulators, content: content)
                     log.info("Mac → Sim (\(bootedSimulators.count)): \(content.prefix(80))")
                 }
             }
@@ -95,7 +95,12 @@ final class SimulatorSync {
     }
 
     private func writeToBootedSimulators(_ content: String, excluding excludedUDID: String? = nil) async {
-        for simulator in bootedSimulators where simulator.udid != excludedUDID {
+        let simulators = bootedSimulators.filter { $0.udid != excludedUDID }
+        await writeToSimulators(simulators, content: content)
+    }
+
+    private func writeToSimulators(_ simulators: [BootedSimulator], content: String) async {
+        for simulator in simulators {
             lastSentToSimulator[simulator.udid] = content
             await ProcessRunner.simctl(["pbcopy", simulator.udid], input: content)
         }
@@ -132,7 +137,7 @@ final class SimulatorSync {
             lastObservedSimulatorContent[simulator.udid] = macContent
         }
         if !macContent.isEmpty {
-            await writeToBootedSimulators(macContent)
+            await writeToSimulators(newlyBooted, content: macContent)
         }
 
         let names = newlyBooted.map(\.name).joined(separator: ", ")
