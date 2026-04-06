@@ -76,6 +76,7 @@ final class SimulatorSync {
 
             guard simContent != lastObservedSimulatorContent else { return }
 
+            lastSentToSimulator = nil
             lastObservedSimulatorContent = simContent
             let macContent = pasteboard.string(forType: .string) ?? ""
             if simContent != macContent {
