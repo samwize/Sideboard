@@ -3,6 +3,7 @@ import SwiftUI
 struct ClipboardView: View {
     let history: ClipboardHistory
     let onRecopy: (ClipboardEntry) -> Void
+    let onStash: (ClipboardEntry) -> Void
 
     var body: some View {
         if history.entries.isEmpty {
@@ -14,7 +15,25 @@ struct ClipboardView: View {
                         if shouldShowDivider(at: index) {
                             TimeDivider(date: entry.timestamp)
                         }
-                        EntryRow(entry: entry) { onRecopy(entry) }
+                        ClipboardEntryRow(
+                            entry: entry,
+                            actions: [
+                                ClipboardEntryAction(
+                                    systemImage: "tray.and.arrow.down.fill",
+                                    help: "Stash",
+                                    role: .normal
+                                ) {
+                                    onStash(entry)
+                                },
+                                ClipboardEntryAction(
+                                    systemImage: "square.on.square",
+                                    help: "Copy again",
+                                    role: .normal
+                                ) {
+                                    onRecopy(entry)
+                                }
+                            ]
+                        )
                     }
                 }
             }
@@ -58,40 +77,5 @@ private struct TimeDivider: View {
         } else {
             return date.formatted(.dateTime.month(.abbreviated).day().hour().minute())
         }
-    }
-}
-
-private struct EntryRow: View {
-    let entry: ClipboardEntry
-    let onTap: () -> Void
-    @State private var isHovered = false
-
-    var body: some View {
-        HStack(spacing: 8) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(entry.preview)
-                    .font(.system(.caption, design: .monospaced))
-                    .lineLimit(2)
-                    .foregroundStyle(.primary)
-                if let sourceApp = entry.sourceApp {
-                    Text(sourceApp)
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                }
-            }
-
-            Spacer(minLength: 4)
-
-            Image(systemName: "square.on.square")
-                .font(.system(size: 10))
-                .foregroundStyle(.secondary)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(isHovered ? Color.accentColor.opacity(0.1) : .clear)
-        .contentShape(Rectangle())
-        .onHover { isHovered = $0 }
-        .onTapGesture { onTap() }
     }
 }
