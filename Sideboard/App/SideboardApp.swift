@@ -19,10 +19,23 @@ final class AppState {
         NSPasteboard.general.setString(entry.content, forType: .string)
         history.moveToTop(entry)
     }
+
+    func stash(_ entry: ClipboardEntry) {
+        history.stash(entry)
+    }
+
+    func unstash(_ entry: ClipboardEntry) {
+        history.unstash(entry)
+    }
+
+    func deleteStash(_ entry: ClipboardEntry) {
+        history.deleteStash(entry)
+    }
 }
 
 enum Tab: String, CaseIterable {
     case clipboard = "Clipboard"
+    case stash = "Stash"
     case logs = "Logs"
     case settings = "Settings"
 }
@@ -47,9 +60,25 @@ struct SideboardApp: App {
                 Group {
                     switch selectedTab {
                     case .clipboard:
-                        ClipboardView(history: appState.history) { entry in
-                            appState.recopy(entry)
-                        }
+                        ClipboardView(
+                            history: appState.history,
+                            onRecopy: { entry in
+                                appState.recopy(entry)
+                            },
+                            onStash: { entry in
+                                appState.stash(entry)
+                            }
+                        )
+                    case .stash:
+                        StashView(
+                            history: appState.history,
+                            onUnstash: { entry in
+                                appState.unstash(entry)
+                            },
+                            onDelete: { entry in
+                                appState.deleteStash(entry)
+                            }
+                        )
                     case .logs:
                         LogView(logStore: appState.log)
                     case .settings:
@@ -58,7 +87,7 @@ struct SideboardApp: App {
                 }
                 .frame(maxHeight: .infinity)
             }
-            .frame(width: 320, height: 400)
+            .frame(width: 360, height: 400)
         } label: {
             Image(systemName: appState.sync.isSimulatorBooted ? "clipboard.fill" : "clipboard")
         }
