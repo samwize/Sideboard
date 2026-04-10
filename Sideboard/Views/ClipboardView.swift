@@ -19,7 +19,7 @@ struct ClipboardView: View {
                             entry: entry,
                             actions: [
                                 ClipboardEntryAction(
-                                    systemImage: "archivebox",
+                                    systemImage: "tray.and.arrow.down.fill",
                                     help: "Stash",
                                     role: .normal
                                 ) {

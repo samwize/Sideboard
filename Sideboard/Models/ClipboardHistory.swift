@@ -28,7 +28,6 @@ final class ClipboardHistory {
     }
 
     func stash(_ entry: ClipboardEntry) {
-        entries.removeAll { $0.id == entry.id }
         stashedEntries.removeAll { $0.content == entry.content }
         stashedEntries.insert(entry, at: 0)
         persistStashedEntries()
@@ -36,7 +35,7 @@ final class ClipboardHistory {
 
     func unstash(_ entry: ClipboardEntry) {
         stashedEntries.removeAll { $0.id == entry.id }
-        insertAtTop(ClipboardEntry(content: entry.content, sourceApp: entry.sourceApp))
+        moveEntryToTop(content: entry.content, sourceApp: entry.sourceApp)
         persistStashedEntries()
     }
 
@@ -54,6 +53,16 @@ final class ClipboardHistory {
         if entries.count > maxEntries {
             entries.removeLast(entries.count - maxEntries)
         }
+    }
+
+    private func moveEntryToTop(content: String, sourceApp: String?) {
+        if let index = entries.firstIndex(where: { $0.content == content }) {
+            let entry = entries.remove(at: index)
+            entries.insert(entry, at: 0)
+            return
+        }
+
+        insertAtTop(ClipboardEntry(content: content, sourceApp: sourceApp))
     }
 
     private func loadStashedEntries() {

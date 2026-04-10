@@ -16,7 +16,7 @@ struct StashView: View {
                             entry: entry,
                             actions: [
                                 ClipboardEntryAction(
-                                    systemImage: "arrow.uturn.backward.circle",
+                                    systemImage: "tray.and.arrow.up.fill",
                                     help: "Unstash",
                                     role: .normal
                                 ) {
