@@ -25,6 +25,12 @@ Sideboard polls the Mac pasteboard **every 1 second**. When you copy something o
 
 In GitHub Actions > Release (one-click) > Run workflow > Set the version number.
 
+Or trigger the same workflow from the CLI:
+
+```bash
+gh workflow run .github/workflows/release-dispatch.yml -f version=1.2.4
+```
+
 This will push a version tag and GitHub Actions handles the rest: build, sign, notarize, DMG, and release.
 
 Or release manually with `make release`.
