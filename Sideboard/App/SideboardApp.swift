@@ -31,6 +31,26 @@ final class AppState {
     func deleteStash(_ entry: ClipboardEntry) {
         history.deleteStash(entry)
     }
+
+    func prepareToOpenMainWindow() {
+        setMainWindowPresented(true)
+    }
+
+    func mainWindowDidAppear() {
+        setMainWindowPresented(true)
+    }
+
+    func mainWindowDidDisappear() {
+        setMainWindowPresented(false)
+    }
+
+    private func setMainWindowPresented(_ isPresented: Bool) {
+        NSApp.setActivationPolicy(isPresented ? .regular : .accessory)
+
+        if isPresented {
+            NSApp.activate(ignoringOtherApps: true)
+        }
+    }
 }
 
 enum Tab: String, CaseIterable {
@@ -42,55 +62,59 @@ enum Tab: String, CaseIterable {
 
 @main
 struct SideboardApp: App {
+    fileprivate static let mainWindowID = "main-window"
+
     @State private var appState = AppState()
     @State private var selectedTab: Tab = .clipboard
 
     var body: some Scene {
         MenuBarExtra {
-            VStack(spacing: 0) {
-                Picker("", selection: $selectedTab) {
-                    ForEach(Tab.allCases, id: \.self) { tab in
-                        Text(tab.rawValue).tag(tab)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-
-                Group {
-                    switch selectedTab {
-                    case .clipboard:
-                        ClipboardView(
-                            history: appState.history,
-                            onRecopy: { entry in
-                                appState.recopy(entry)
-                            },
-                            onStash: { entry in
-                                appState.stash(entry)
-                            }
-                        )
-                    case .stash:
-                        StashView(
-                            history: appState.history,
-                            onUnstash: { entry in
-                                appState.unstash(entry)
-                            },
-                            onDelete: { entry in
-                                appState.deleteStash(entry)
-                            }
-                        )
-                    case .logs:
-                        LogView(logStore: appState.log)
-                    case .settings:
-                        SettingsView(appState: appState)
-                    }
-                }
-                .frame(maxHeight: .infinity)
-            }
-            .frame(width: 360, height: 400)
+            MenuBarPanelView(appState: appState, selectedTab: $selectedTab)
+                .frame(width: 360, height: 400)
         } label: {
             Image(systemName: appState.sync.isSimulatorBooted ? "clipboard.fill" : "clipboard")
         }
         .menuBarExtraStyle(.window)
+
+        Window("Sideboard", id: Self.mainWindowID) {
+            MainWindowView(appState: appState, selectedTab: $selectedTab)
+                .frame(minWidth: 520, minHeight: 420)
+        }
+        .defaultSize(width: 720, height: 560)
+    }
+}
+
+private struct MenuBarPanelView: View {
+    @Environment(\.openWindow) private var openWindow
+
+    let appState: AppState
+    @Binding var selectedTab: Tab
+
+    var body: some View {
+        SideboardContentView(
+            appState: appState,
+            selectedTab: $selectedTab,
+            openMainWindow: openMainWindow
+        )
+    }
+
+    private func openMainWindow() {
+        appState.prepareToOpenMainWindow()
+        openWindow(id: SideboardApp.mainWindowID)
+    }
+}
+
+private struct MainWindowView: View {
+    let appState: AppState
+    @Binding var selectedTab: Tab
+
+    var body: some View {
+        SideboardContentView(appState: appState, selectedTab: $selectedTab)
+            .onAppear {
+                appState.mainWindowDidAppear()
+            }
+            .onDisappear {
+                appState.mainWindowDidDisappear()
+            }
     }
 }
