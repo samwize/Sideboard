@@ -3,12 +3,13 @@ import SwiftUI
 struct SideboardContentView: View {
     let appState: AppState
     @Binding var selectedTab: Tab
+    let availableTabs: [Tab]
     var openMainWindow: (() -> Void)? = nil
 
     var body: some View {
         VStack(spacing: 0) {
-            Picker("", selection: $selectedTab) {
-                ForEach(Tab.allCases, id: \.self) { tab in
+            Picker("", selection: availableSelection) {
+                ForEach(availableTabs, id: \.self) { tab in
                     Text(tab.rawValue).tag(tab)
                 }
             }
@@ -17,7 +18,7 @@ struct SideboardContentView: View {
             .padding(.vertical, 8)
 
             Group {
-                switch selectedTab {
+                switch resolvedTab {
                 case .clipboard:
                     ClipboardView(
                         history: appState.history,
@@ -60,5 +61,16 @@ struct SideboardContentView: View {
                 .padding(12)
             }
         }
+    }
+
+    private var availableSelection: Binding<Tab> {
+        Binding(
+            get: { resolvedTab },
+            set: { selectedTab = $0 }
+        )
+    }
+
+    private var resolvedTab: Tab {
+        availableTabs.contains(selectedTab) ? selectedTab : availableTabs[0]
     }
 }

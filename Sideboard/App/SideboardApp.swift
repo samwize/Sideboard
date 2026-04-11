@@ -65,11 +65,18 @@ struct SideboardApp: App {
     fileprivate static let mainWindowID = "main-window"
 
     @State private var appState = AppState()
-    @State private var selectedTab: Tab = .clipboard
+    @State private var menuSelectedTab: Tab = .clipboard
+    @State private var windowSelectedTab: Tab = .clipboard
 
     var body: some Scene {
         MenuBarExtra {
-            MenuBarPanelView(appState: appState, selectedTab: $selectedTab)
+            MenuBarPanelView(
+                appState: appState,
+                selectedTab: $menuSelectedTab,
+                onOpenMainWindow: {
+                    windowSelectedTab = menuSelectedTab
+                }
+            )
                 .frame(width: 360, height: 400)
         } label: {
             Image(systemName: appState.sync.isSimulatorBooted ? "clipboard.fill" : "clipboard")
@@ -77,7 +84,7 @@ struct SideboardApp: App {
         .menuBarExtraStyle(.window)
 
         Window("Sideboard", id: Self.mainWindowID) {
-            MainWindowView(appState: appState, selectedTab: $selectedTab)
+            MainWindowView(appState: appState, selectedTab: $windowSelectedTab)
                 .frame(minWidth: 520, minHeight: 420)
         }
         .defaultSize(width: 720, height: 560)
@@ -89,17 +96,20 @@ private struct MenuBarPanelView: View {
 
     let appState: AppState
     @Binding var selectedTab: Tab
+    let onOpenMainWindow: () -> Void
 
     var body: some View {
         SideboardContentView(
             appState: appState,
             selectedTab: $selectedTab,
+            availableTabs: [.clipboard, .stash],
             openMainWindow: openMainWindow
         )
     }
 
     private func openMainWindow() {
         let menuWindow = NSApp.keyWindow
+        onOpenMainWindow()
         appState.prepareToOpenMainWindow()
         openWindow(id: SideboardApp.mainWindowID)
         menuWindow?.close()
@@ -111,7 +121,11 @@ private struct MainWindowView: View {
     @Binding var selectedTab: Tab
 
     var body: some View {
-        SideboardContentView(appState: appState, selectedTab: $selectedTab)
+        SideboardContentView(
+            appState: appState,
+            selectedTab: $selectedTab,
+            availableTabs: Tab.allCases
+        )
             .onAppear {
                 appState.mainWindowDidAppear()
             }
