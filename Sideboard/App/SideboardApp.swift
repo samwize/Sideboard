@@ -99,8 +99,10 @@ private struct MenuBarPanelView: View {
     }
 
     private func openMainWindow() {
+        let menuWindow = NSApp.keyWindow
         appState.prepareToOpenMainWindow()
         openWindow(id: SideboardApp.mainWindowID)
+        menuWindow?.close()
     }
 }
 
