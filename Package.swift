@@ -9,6 +9,11 @@ let package = Package(
             name: "Sideboard",
             path: "Sideboard",
             exclude: ["Assets.xcassets"]
+        ),
+        .testTarget(
+            name: "SideboardTests",
+            dependencies: ["Sideboard"],
+            path: "Tests/SideboardTests"
         )
     ]
 )

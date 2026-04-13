@@ -9,10 +9,12 @@ struct ClipboardView: View {
         if history.entries.isEmpty {
             ContentUnavailableView("No clipboard history yet", systemImage: "clipboard")
         } else {
+            let entries = history.entries
+
             ScrollView(showsIndicators: false) {
                 LazyVStack(alignment: .leading, spacing: 0) {
-                    ForEach(Array(history.entries.enumerated()), id: \.element.id) { index, entry in
-                        if shouldShowDivider(at: index) {
+                    ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
+                        if Self.shouldShowDivider(at: index, in: entries) {
                             TimeDivider(date: entry.timestamp)
                         }
                         ClipboardEntryRow(
@@ -40,10 +42,15 @@ struct ClipboardView: View {
         }
     }
 
-    private func shouldShowDivider(at index: Int) -> Bool {
+    nonisolated static func shouldShowDivider(at index: Int, in entries: [ClipboardEntry]) -> Bool {
         if index == 0 { return true }
-        let current = history.entries[index]
-        let previous = history.entries[index - 1]
+
+        guard entries.indices.contains(index), entries.indices.contains(index - 1) else {
+            return false
+        }
+
+        let current = entries[index]
+        let previous = entries[index - 1]
         return previous.timestamp.timeIntervalSince(current.timestamp) > 300
     }
 }
