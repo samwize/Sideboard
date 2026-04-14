@@ -6,17 +6,25 @@ final class AppState {
     let history = ClipboardHistory()
     let log = LogStore()
     let sync: SimulatorSync
+    private let readPasteboard: () -> String?
+    private let writePasteboard: (String) -> Void
 
-    init() {
+    init(
+        readPasteboard: @escaping () -> String? = {
+            NSPasteboard.general.string(forType: .string)
+        },
+        writePasteboard: @escaping (String) -> Void = { content in
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(content, forType: .string)
+        }
+    ) {
+        self.readPasteboard = readPasteboard
+        self.writePasteboard = writePasteboard
         sync = SimulatorSync(history: history, log: log)
     }
 
     func recopy(_ entry: ClipboardEntry) {
-        let current = NSPasteboard.general.string(forType: .string)
-        guard current != entry.content else { return }
-        history.lastWrittenContent = entry.content
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(entry.content, forType: .string)
+        guard copyToPasteboard(entry.content) else { return }
         history.moveToTop(entry)
     }
 
@@ -26,6 +34,7 @@ final class AppState {
 
     func unstash(_ entry: ClipboardEntry) {
         history.unstash(entry)
+        _ = copyToPasteboard(entry.content)
     }
 
     func deleteStash(_ entry: ClipboardEntry) {
@@ -50,6 +59,14 @@ final class AppState {
         if isPresented {
             NSApp.activate(ignoringOtherApps: true)
         }
+    }
+
+    @discardableResult
+    private func copyToPasteboard(_ content: String) -> Bool {
+        guard readPasteboard() != content else { return false }
+        history.lastWrittenContent = content
+        writePasteboard(content)
+        return true
     }
 }
 
