@@ -81,9 +81,7 @@ final class SimulatorSync {
         }
 
         if let (simulator, simContent) = pendingMacUpdate {
-            pasteboard.clearContents()
-            pasteboard.setString(simContent, forType: .string)
-            lastChangeCount = pasteboard.changeCount
+            setPasteboard(simContent)
             history.add(content: simContent, sourceApp: "iOS Simulator")
             await writeToBootedSimulators(simContent, excluding: simulator.udid)
             log.info("Sim → Mac (\(simulator.name)): \(simContent.prefix(80))")
@@ -99,7 +97,7 @@ final class SimulatorSync {
         if !isOurWrite {
             let result = ClipboardTransformer.apply(rules: ruleStore.rules, to: content)
             if !result.appliedRuleNames.isEmpty {
-                writeClean(result.text)
+                setPasteboard(result.text)
                 history.addReplaced(
                     content: result.text,
                     sourceApp: sourceApp,
@@ -117,7 +115,7 @@ final class SimulatorSync {
         }
     }
 
-    private func writeClean(_ content: String) {
+    private func setPasteboard(_ content: String) {
         pasteboard.clearContents()
         pasteboard.setString(content, forType: .string)
         lastChangeCount = pasteboard.changeCount

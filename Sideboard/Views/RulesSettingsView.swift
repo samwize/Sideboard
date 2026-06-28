@@ -107,28 +107,30 @@ struct RuleEditorView: View {
         self.ruleID = rule?.id
         self.isEnabled = rule?.isEnabled ?? true
 
-        _name = State(initialValue: rule?.name ?? "")
+        var kindTag: KindTag = .findReplace
+        var paramsText = ""
+        var pattern = ""
+        var replacement = ""
+        var isRegex = false
 
         switch rule?.kind {
         case let .stripTrackingParams(names):
-            _kindTag = State(initialValue: .tracking)
-            _paramsText = State(initialValue: names.joined(separator: "\n"))
-            _pattern = State(initialValue: "")
-            _replacement = State(initialValue: "")
-            _isRegex = State(initialValue: true)
-        case let .findReplace(pattern, replacement, isRegex):
-            _kindTag = State(initialValue: .findReplace)
-            _paramsText = State(initialValue: "")
-            _pattern = State(initialValue: pattern)
-            _replacement = State(initialValue: replacement)
-            _isRegex = State(initialValue: isRegex)
+            kindTag = .tracking
+            paramsText = names.joined(separator: "\n")
+        case let .findReplace(p, r, rx):
+            pattern = p
+            replacement = r
+            isRegex = rx
         case nil:
-            _kindTag = State(initialValue: .findReplace)
-            _paramsText = State(initialValue: "")
-            _pattern = State(initialValue: "")
-            _replacement = State(initialValue: "")
-            _isRegex = State(initialValue: false)
+            break
         }
+
+        _name = State(initialValue: rule?.name ?? "")
+        _kindTag = State(initialValue: kindTag)
+        _paramsText = State(initialValue: paramsText)
+        _pattern = State(initialValue: pattern)
+        _replacement = State(initialValue: replacement)
+        _isRegex = State(initialValue: isRegex)
     }
 
     var body: some View {

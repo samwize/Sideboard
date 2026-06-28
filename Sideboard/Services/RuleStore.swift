@@ -41,12 +41,9 @@ final class RuleStore {
     }
 
     func duplicate(_ rule: ReplacementRule) {
+        guard let index = rules.firstIndex(where: { $0.id == rule.id }) else { return }
         let copy = ReplacementRule(name: rule.name + " copy", isEnabled: rule.isEnabled, kind: rule.kind)
-        if let index = rules.firstIndex(where: { $0.id == rule.id }) {
-            rules.insert(copy, at: index + 1)
-        } else {
-            rules.append(copy)
-        }
+        rules.insert(copy, at: index + 1)
         changed()
     }
 

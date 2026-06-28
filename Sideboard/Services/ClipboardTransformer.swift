@@ -6,6 +6,10 @@ enum ClipboardTransformer {
         let appliedRuleNames: [String]
     }
 
+    // NSDataDetector is immutable and thread-safe; build it once instead of per copy.
+    private static let linkDetector =
+        try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
+
     static func apply(rules: [ReplacementRule], to text: String) -> Result {
         var current = text
         var fired: [String] = []
@@ -31,9 +35,8 @@ enum ClipboardTransformer {
     }
 
     private static func stripTrackingParams(names: [String], in text: String) -> String {
-        guard let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) else {
-            return text
-        }
+        guard let detector = linkDetector else { return text }
+        let loweredNames = names.map { $0.lowercased() }
 
         let nsText = text as NSString
         let matches = detector.matches(in: text, range: NSRange(location: 0, length: nsText.length))
@@ -50,8 +53,8 @@ enum ClipboardTransformer {
             let pairs = query.components(separatedBy: "&")
             let kept = pairs.filter { pair in
                 let rawName = String(pair.prefix { $0 != "=" })
-                let name = rawName.removingPercentEncoding ?? rawName
-                return !isBlocked(name: name, in: names)
+                let name = (rawName.removingPercentEncoding ?? rawName).lowercased()
+                return !loweredNames.contains { isBlocked(name: name, pattern: $0) }
             }
             guard kept.count != pairs.count else { continue }
 
@@ -64,17 +67,11 @@ enum ClipboardTransformer {
         return result as String
     }
 
-    private static func isBlocked(name: String, in names: [String]) -> Bool {
-        let candidate = name.lowercased()
-        for entry in names {
-            let pattern = entry.lowercased()
-            if pattern.hasSuffix("*") {
-                if candidate.hasPrefix(pattern.dropLast()) { return true }
-            } else if candidate == pattern {
-                return true
-            }
+    private static func isBlocked(name: String, pattern: String) -> Bool {
+        if pattern.hasSuffix("*") {
+            return name.hasPrefix(pattern.dropLast())
         }
-        return false
+        return name == pattern
     }
 
     private static func findReplace(pattern: String, replacement: String, isRegex: Bool, in text: String) -> String {

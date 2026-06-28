@@ -30,36 +30,12 @@ final class AppState {
         let base = top.originalContent ?? top.content
         let result = ClipboardTransformer.apply(rules: ruleStore.rules, to: base)
 
-        if top.isReplaced {
-            if result.appliedRuleNames.isEmpty {
-                if history.entries.dropFirst().first?.content == base {
-                    history.removeTop()
-                } else {
-                    history.replaceTop(with: ClipboardEntry(
-                        content: base,
-                        sourceApp: top.sourceApp,
-                        timestamp: top.timestamp
-                    ))
-                }
-                copyToPasteboard(base)
-            } else if result.text != top.content || result.appliedRuleNames != top.appliedRules {
-                history.replaceTop(with: ClipboardEntry(
-                    content: result.text,
-                    sourceApp: top.sourceApp,
-                    timestamp: top.timestamp,
-                    appliedRules: result.appliedRuleNames,
-                    originalContent: base
-                ))
-                copyToPasteboard(result.text)
-            }
-        } else if !result.appliedRuleNames.isEmpty {
-            history.addReplaced(
-                content: result.text,
-                sourceApp: top.sourceApp,
-                appliedRules: result.appliedRuleNames,
-                originalContent: base
-            )
-            copyToPasteboard(result.text)
+        if let updated = history.reapplyTop(
+            base: base,
+            cleanedText: result.text,
+            appliedRules: result.appliedRuleNames
+        ) {
+            copyToPasteboard(updated)
         }
     }
 

@@ -24,12 +24,7 @@ final class ClipboardHistory {
 
     func moveToTop(_ entry: ClipboardEntry) {
         entries.removeAll { $0.id == entry.id }
-        insertAtTop(ClipboardEntry(
-            content: entry.content,
-            sourceApp: entry.sourceApp,
-            appliedRules: entry.appliedRules,
-            originalContent: entry.originalContent
-        ))
+        insertCopy(of: entry)
     }
 
     func addReplaced(content: String, sourceApp: String?, appliedRules: [String], originalContent: String) {
@@ -41,14 +36,35 @@ final class ClipboardHistory {
         ))
     }
 
-    func replaceTop(with entry: ClipboardEntry) {
-        guard !entries.isEmpty else { return }
-        entries[0] = entry
-    }
+    /// Re-derives the top entry from `base` after a rule change, preserving the
+    /// cleaned/original pairing. Returns the text to place on the pasteboard, or
+    /// nil when nothing changed.
+    func reapplyTop(base: String, cleanedText: String, appliedRules: [String]) -> String? {
+        guard let top = entries.first else { return nil }
 
-    func removeTop() {
-        guard !entries.isEmpty else { return }
-        entries.removeFirst()
+        if top.isReplaced {
+            if appliedRules.isEmpty {
+                if entries.dropFirst().first?.content == base {
+                    entries.removeFirst()
+                } else {
+                    replaceTop(with: ClipboardEntry(content: base, sourceApp: top.sourceApp, timestamp: top.timestamp))
+                }
+                return base
+            }
+            guard cleanedText != top.content || appliedRules != top.appliedRules else { return nil }
+            replaceTop(with: ClipboardEntry(
+                content: cleanedText,
+                sourceApp: top.sourceApp,
+                timestamp: top.timestamp,
+                appliedRules: appliedRules,
+                originalContent: base
+            ))
+            return cleanedText
+        }
+
+        guard !appliedRules.isEmpty else { return nil }
+        addReplaced(content: cleanedText, sourceApp: top.sourceApp, appliedRules: appliedRules, originalContent: base)
+        return cleanedText
     }
 
     func stash(_ entry: ClipboardEntry) {
@@ -72,6 +88,20 @@ final class ClipboardHistory {
         entries.removeAll()
     }
 
+    private func replaceTop(with entry: ClipboardEntry) {
+        guard !entries.isEmpty else { return }
+        entries[0] = entry
+    }
+
+    private func insertCopy(of entry: ClipboardEntry) {
+        insertAtTop(ClipboardEntry(
+            content: entry.content,
+            sourceApp: entry.sourceApp,
+            appliedRules: entry.appliedRules,
+            originalContent: entry.originalContent
+        ))
+    }
+
     private func insertAtTop(_ entry: ClipboardEntry) {
         entries.insert(entry, at: 0)
         if entries.count > maxEntries {
@@ -86,12 +116,7 @@ final class ClipboardHistory {
             return
         }
 
-        insertAtTop(ClipboardEntry(
-            content: entry.content,
-            sourceApp: entry.sourceApp,
-            appliedRules: entry.appliedRules,
-            originalContent: entry.originalContent
-        ))
+        insertCopy(of: entry)
     }
 
     private func loadStashedEntries() {
