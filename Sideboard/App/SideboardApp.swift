@@ -5,6 +5,7 @@ import SwiftUI
 final class AppState {
     let history = ClipboardHistory()
     let log = LogStore()
+    let ruleStore = RuleStore()
     let sync: SimulatorSync
     private let readPasteboard: () -> String?
     private let writePasteboard: (String) -> Void
@@ -20,7 +21,46 @@ final class AppState {
     ) {
         self.readPasteboard = readPasteboard
         self.writePasteboard = writePasteboard
-        sync = SimulatorSync(history: history, log: log)
+        sync = SimulatorSync(history: history, log: log, ruleStore: ruleStore)
+        ruleStore.onChange = { [weak self] in self?.reapplyRulesToLatest() }
+    }
+
+    func reapplyRulesToLatest() {
+        guard let top = history.entries.first else { return }
+        let base = top.originalContent ?? top.content
+        let result = ClipboardTransformer.apply(rules: ruleStore.rules, to: base)
+
+        if top.isReplaced {
+            if result.appliedRuleNames.isEmpty {
+                if history.entries.dropFirst().first?.content == base {
+                    history.removeTop()
+                } else {
+                    history.replaceTop(with: ClipboardEntry(
+                        content: base,
+                        sourceApp: top.sourceApp,
+                        timestamp: top.timestamp
+                    ))
+                }
+                copyToPasteboard(base)
+            } else if result.text != top.content || result.appliedRuleNames != top.appliedRules {
+                history.replaceTop(with: ClipboardEntry(
+                    content: result.text,
+                    sourceApp: top.sourceApp,
+                    timestamp: top.timestamp,
+                    appliedRules: result.appliedRuleNames,
+                    originalContent: base
+                ))
+                copyToPasteboard(result.text)
+            }
+        } else if !result.appliedRuleNames.isEmpty {
+            history.addReplaced(
+                content: result.text,
+                sourceApp: top.sourceApp,
+                appliedRules: result.appliedRuleNames,
+                originalContent: base
+            )
+            copyToPasteboard(result.text)
+        }
     }
 
     func recopy(_ entry: ClipboardEntry) {

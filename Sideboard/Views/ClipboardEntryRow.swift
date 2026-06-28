@@ -15,6 +15,11 @@ struct ClipboardEntryRow: View {
                     .foregroundStyle(.primary)
 
                 HStack(spacing: 6) {
+                    if entry.isReplaced {
+                        Image(systemName: "wand.and.stars")
+                            .foregroundStyle(.secondary)
+                            .help("Applied: " + entry.appliedRules.joined(separator: ", "))
+                    }
                     if let sourceApp = entry.sourceApp {
                         Text(sourceApp)
                     }

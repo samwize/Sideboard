@@ -17,15 +17,17 @@ final class SimulatorSync {
     private let pasteboard = NSPasteboard.general
     private let history: ClipboardHistory
     private let log: LogStore
+    private let ruleStore: RuleStore
     private var lastChangeCount: Int
     private var bootedSimulators: [BootedSimulator] = []
     private var lastSentToSimulator: [String: String] = [:]
     private var lastObservedSimulatorContent: [String: String] = [:]
     private var pollCount = 0
 
-    init(history: ClipboardHistory, log: LogStore) {
+    init(history: ClipboardHistory, log: LogStore, ruleStore: RuleStore) {
         self.history = history
         self.log = log
+        self.ruleStore = ruleStore
         lastChangeCount = pasteboard.changeCount
         log.info("Sideboard started")
         Task { [weak self] in
@@ -46,13 +48,7 @@ final class SimulatorSync {
         if pasteboard.changeCount != lastChangeCount {
             lastChangeCount = pasteboard.changeCount
             if let content = pasteboard.string(forType: .string) {
-                let sourceApp = NSWorkspace.shared.frontmostApplication?.localizedName
-                history.add(content: content, sourceApp: sourceApp)
-
-                if isSimulatorBooted {
-                    await writeToSimulators(bootedSimulators, content: content)
-                    log.info("Mac → Sim (\(bootedSimulators.count)): \(content.prefix(80))")
-                }
+                await ingestMacCopy(content)
             }
         }
 
@@ -92,6 +88,39 @@ final class SimulatorSync {
             await writeToBootedSimulators(simContent, excluding: simulator.udid)
             log.info("Sim → Mac (\(simulator.name)): \(simContent.prefix(80))")
         }
+    }
+
+    private func ingestMacCopy(_ content: String) async {
+        let isOurWrite = content == history.lastWrittenContent
+        let sourceApp = isOurWrite ? nil : NSWorkspace.shared.frontmostApplication?.localizedName
+        history.add(content: content, sourceApp: sourceApp)
+
+        var delivered = content
+        if !isOurWrite {
+            let result = ClipboardTransformer.apply(rules: ruleStore.rules, to: content)
+            if !result.appliedRuleNames.isEmpty {
+                writeClean(result.text)
+                history.addReplaced(
+                    content: result.text,
+                    sourceApp: sourceApp,
+                    appliedRules: result.appliedRuleNames,
+                    originalContent: content
+                )
+                log.info("Cleaned (\(result.appliedRuleNames.joined(separator: ", "))): \(result.text.prefix(80))")
+                delivered = result.text
+            }
+        }
+
+        if isSimulatorBooted {
+            await writeToSimulators(bootedSimulators, content: delivered)
+            log.info("Mac → Sim (\(bootedSimulators.count)): \(delivered.prefix(80))")
+        }
+    }
+
+    private func writeClean(_ content: String) {
+        pasteboard.clearContents()
+        pasteboard.setString(content, forType: .string)
+        lastChangeCount = pasteboard.changeCount
     }
 
     private func writeToBootedSimulators(_ content: String, excluding excludedUDID: String? = nil) async {
