@@ -48,6 +48,10 @@ struct SettingsView: View {
                     .disabled(appState.history.entries.isEmpty)
                 }
 
+                SettingsSection("Replacements") {
+                    ReplacementRulesList(store: appState.ruleStore)
+                }
+
                 SettingsSection("App") {
                     Button {
                         NSApplication.shared.terminate(nil)

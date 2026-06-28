@@ -5,6 +5,7 @@ import SwiftUI
 final class AppState {
     let history = ClipboardHistory()
     let log = LogStore()
+    let ruleStore = RuleStore()
     let sync: SimulatorSync
     private let readPasteboard: () -> String?
     private let writePasteboard: (String) -> Void
@@ -20,7 +21,22 @@ final class AppState {
     ) {
         self.readPasteboard = readPasteboard
         self.writePasteboard = writePasteboard
-        sync = SimulatorSync(history: history, log: log)
+        sync = SimulatorSync(history: history, log: log, ruleStore: ruleStore)
+        ruleStore.onChange = { [weak self] in self?.reapplyRulesToLatest() }
+    }
+
+    func reapplyRulesToLatest() {
+        guard let top = history.entries.first else { return }
+        let base = top.originalContent ?? top.content
+        let result = ClipboardTransformer.apply(rules: ruleStore.rules, to: base)
+
+        if let updated = history.reapplyTop(
+            base: base,
+            cleanedText: result.text,
+            appliedRules: result.appliedRuleNames
+        ) {
+            copyToPasteboard(updated)
+        }
     }
 
     func recopy(_ entry: ClipboardEntry) {
