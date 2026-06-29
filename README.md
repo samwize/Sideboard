@@ -1,8 +1,15 @@
 ![Sideboard](/Resources/hero-banner.jpg)
 
-A macOS menu bar clipboard manager. It keeps a history of what you copy, lets you stash entries for later, and cleans copied text with configurable replacement rules — stripping tracking parameters from URLs, straightening smart quotes, trimming whitespace, and anything else you set up.
+A macOS menu bar clipboard manager. Keep a history of everything you copy, stash text for later, and clean it up with rules you control.
 
 > Sideboard started life as a workaround for the [broken pasteboard sync in Xcode 26.4](https://samwize.com/2026/03/30/xcode-simulator-paste-broken-workaround/). Xcode has since fixed that bug, so the Simulator sync was removed; Sideboard is now a focused clipboard manager.
+
+## Key Features
+
+- **Clipboard history.** The last 100 things you copied, one click from the menu bar. Need that URL from 20 minutes ago? Still there.
+- **Stash.** Park text you'll want soon, like a prompt to hand an agent later. Sticks around across restarts.
+- **Replacement rules.** Copied URLs get their tracking codes stripped automatically (`utm_*`, `fbclid`, `gclid`). Add your own find/replace rules with regex for anything else.
+- **Private.** It all stays on your Mac. No account, no network, no telemetry.
 
 ## Install
 
