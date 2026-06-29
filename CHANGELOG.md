@@ -2,6 +2,11 @@
 
 All notable changes to Sideboard are documented here. This project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.4.0] - 2026-06-29
+
+### Removed
+- iOS Simulator clipboard sync (#32). Xcode fixed the underlying pasteboard bug, so the workaround is no longer needed; Sideboard is now a focused clipboard manager. The clipboard polling, history, and replacement rules continue to work via a standalone monitor.
+
 ## [1.3.0] - 2026-06-28
 
 ### Added

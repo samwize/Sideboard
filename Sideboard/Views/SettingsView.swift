@@ -6,20 +6,6 @@ struct SettingsView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                SettingsSection("Simulator") {
-                    HStack(spacing: 8) {
-                        Image(systemName: appState.sync.isSimulatorBooted ? "iphone" : "iphone.slash")
-                            .foregroundStyle(appState.sync.isSimulatorBooted ? .green : .secondary)
-                            .frame(width: 20)
-                        Text(appState.sync.isSimulatorBooted ? "Connected" : "Not running")
-                        Spacer()
-                        Circle()
-                            .fill(appState.sync.isSimulatorBooted ? .green : .red.opacity(0.6))
-                            .frame(width: 8, height: 8)
-                    }
-                    .settingsRow()
-                }
-
                 SettingsSection("Clipboard") {
                     HStack {
                         Text("Entries")

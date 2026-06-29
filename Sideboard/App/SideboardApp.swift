@@ -6,7 +6,7 @@ final class AppState {
     let history = ClipboardHistory()
     let log = LogStore()
     let ruleStore = RuleStore()
-    let sync: SimulatorSync
+    let monitor: ClipboardMonitor
     private let readPasteboard: () -> String?
     private let writePasteboard: (String) -> Void
 
@@ -21,7 +21,7 @@ final class AppState {
     ) {
         self.readPasteboard = readPasteboard
         self.writePasteboard = writePasteboard
-        sync = SimulatorSync(history: history, log: log, ruleStore: ruleStore)
+        monitor = ClipboardMonitor(history: history, log: log, ruleStore: ruleStore)
         ruleStore.onChange = { [weak self] in self?.reapplyRulesToLatest() }
     }
 
@@ -112,7 +112,7 @@ struct SideboardApp: App {
             )
                 .frame(width: 360, height: 400)
         } label: {
-            Image(systemName: appState.sync.isSimulatorBooted ? "clipboard.fill" : "clipboard")
+            Image(systemName: "clipboard")
         }
         .menuBarExtraStyle(.window)
 

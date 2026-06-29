@@ -1,8 +1,8 @@
 ![Sideboard](/Resources/hero-banner.jpg)
 
-A macOS menu bar app that syncs your clipboard with the iOS Simulator. Fixes the [broken pasteboard sync in Xcode 26.4](https://samwize.com/2026/03/30/xcode-simulator-paste-broken-workaround/).
+A macOS menu bar clipboard manager. It keeps a history of what you copy, lets you stash entries for later, and cleans copied text with configurable replacement rules — stripping tracking parameters from URLs, straightening smart quotes, trimming whitespace, and anything else you set up.
 
-It has no other features, but I might add more as a companion Mac app.
+> Sideboard started life as a workaround for the [broken pasteboard sync in Xcode 26.4](https://samwize.com/2026/03/30/xcode-simulator-paste-broken-workaround/). Xcode has since fixed that bug, so the Simulator sync was removed; Sideboard is now a focused clipboard manager.
 
 ## Install
 
@@ -14,12 +14,11 @@ Or build from source with `make install`
 
 ## How it works
 
-Sideboard polls the Mac pasteboard **every 1 second**. When you copy something on your Mac, it syncs to the booted Simulator via `xcrun simctl pbcopy`. It also syncs the other direction: copies made inside the Simulator appear on your Mac clipboard.
+Sideboard polls the Mac pasteboard **every 1 second** and keeps a history of what you copy. Replacement rules run on each copy — for example stripping `utm_*`, `fbclid`, and `gclid` tracking parameters from URLs — and you can add, edit, or duplicate your own rules in Settings. When a rule changes the copied text, both the original and the cleaned version are kept in history.
 
 ## Requirements
 
 - macOS 26+
-- Xcode command line tools (`xcrun simctl` must be available)
 
 ## Release Workflow
 
